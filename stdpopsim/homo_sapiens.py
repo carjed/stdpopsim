@@ -211,195 +211,79 @@ class TennessenEuropean(models.Model):
         ]
 
 
-class GazaveTwoPopOutOfAfrica(models.Model):
+class BrowningAmerica(models.Model):
     """
     docs
-    
+
     """
     def __init__(self):
         super().__init__()
-        generation_time = 25
-
-        # 220kya:
-        # African population constant with Ne~7300
-        N_A = 7310
-        
-        # 148kya:
-        # instantaneous growth to Ne~14000
-        T_AF = 148e3 / generation_time
-        N_AF = 14474
-        
-        N6_EU = 13143
-        
-        # 118kya:
-        # non-AFR pops migrate OOA; bottlenecks to Ne~1800
-        # migration between AFR occurs
-        N_B = 1861
-        T5 = 118e3 / generation_time
-        T4 = T5
-        m_AF_B = 15e-5
-        N5_EU = 62
-        N4_EU = N6_EU
-        
-        # 18kya:
-        # 2nd EUR bottlenecks to Ne~1000 & starts growing with rate 0.307%
-        # migration rate slows between AFR-EUR
-        N_EU0 = 1032
-        T3 = 18e3 / generation_time
-        T2 = T3
-    #     m_AF_EU = 2.5e-5
-        r_EU0 = 0 # 0.00307
-    #     N2_EU = 15829 # N_EU0 / math.exp(-r_EU0 * T_EU_B)
-        N2_EU = 16178
-        N2_AF = 26682
-        N3_EU = 2020
-        # 5.1kya:
-        # explosive growth in both AFR & EUR
-    
-        # Chen 2015
-    #     T1_EU = 7.26e3 / generation_time 
-        T1_EU = 4.95e3 / generation_time
-        T1_AF = 10.01e3 / generation_time
-    #     r_EU = 0.0149
-        r_EU = 0.022
-        r_AF = 0.00735
-    #     N1_EU = 1.2e6 # N_EU1 / math.exp(-r_EU * T_EG)
-        N1_EU = 1.261e6
-        m_EG = 0
-        N1_AF = 5.062e5 # N_AF / math.exp(-r_AF * T_EG)
-        
-        # Population IDs correspond to their indexes in the population
-        # configuration array. Therefore, we have 0=YRI, 1=CEU initially.
+        N0 = 7310 # initial population size
+        Thum = 5920 # time (gens) of advent of modern humans
+        Naf = 14474 # size of african population
+        Tooa = 2040 # number of generations back to Out of Africa
+        Nb = 1861 # size of out of Africa population
+        mafb = 1.5e-4 # migration rate Africa and Out-of-Africa
+        Teu = 920 # number generations back to Asia-Europe split
+        Neu = 1032 # bottleneck population sizes
+        Nas = 554
+        mafeu = 2.5e-5 # mig. rates
+        mafas = 7.8e-6
+        meuas = 3.11e-5
+        reu = 0.0038 # growth rate per generation in Europe
+        ras = 0.0048 # growth rate per generation in Asia
+        Tadmix = 12 # time of admixture
+        Nadmix = 30000 # initial size of admixed population
+        radmix = .05 # growth rate of admixed population
+        # pop0 is Africa, pop1 is Europe, pop2 is Asia,  pop3 is admixed
         self.population_configurations = [
             msprime.PopulationConfiguration(
-                sample_size=n_afr, initial_size=N1_AF, growth_rate=r_AF),
+                initial_size=Naf, growth_rate=0.0),
             msprime.PopulationConfiguration(
-                sample_size=n_eur, initial_size=N1_EU, growth_rate=r_EU)#,
+                initial_size=Neu*math.exp(reu*Teu), growth_rate=reu),
+            msprime.PopulationConfiguration(
+                initial_size=Nas*math.exp(ras*Teu), growth_rate=ras),
+            msprime.PopulationConfiguration(
+                initial_size=Nadmix*math.exp(radmix*Tadmix), growth_rate=radmix)
         ]
-    
-        # up to 5.1kya, no migration
+
         self.migration_matrix = [
-            [0, 0],
-            [0, 0],
+            [0, mafeu, mafas, 0],
+            [mafeu, 0, meuas, 0],
+            [mafas, meuas, 0, 0],
+            [0, 0, 0, 0]
         ]
-        
-        self.demographic_events = [
-            # at 5.1kya, change to slow growth rate in EUR & stop growth in AFR;
-            # add migration rate
-            msprime.PopulationParametersChange(
-                time=T1_EU, growth_rate=0, initial_size=N2_EU, population_id=1),
-            msprime.PopulationParametersChange(
-                time=T1_AF, growth_rate=0, initial_size=N2_AF, population_id=0),
-            
-            # at 18kya, bottleneck + instantaneous recovery to smaller Ne
-            msprime.PopulationParametersChange(
-                time=T2, initial_size=N3_EU, population_id=1),
-            msprime.PopulationParametersChange(
-                time=T3, initial_size=N4_EU, population_id=1),
-            # at 118kya, bottleneck + instantaneous recovery to same Ne
-            msprime.PopulationParametersChange(
-                time=T4, initial_size=N5_EU, population_id=1),
-            msprime.PopulationParametersChange(
-                time=T5, initial_size=N6_EU, population_id=1),
-            # At 148kya, instantaneous growth in AFR
-            msprime.PopulationParametersChange(
-                time=T_AF, initial_size=N_A, population_id=0)
+        # Admixture event, 1/6 Africa, 2/6 Europe, 3/6 Asia
+        admixture_event = [
+            msprime.MassMigration(
+                time=Tadmix, source=3, destination=0, proportion=1.0/6.0),
+            msprime.MassMigration(
+                time=Tadmix+0.0001, source=3, destination=1, proportion=2.0/5.0),
+            msprime.MassMigration(
+                time=Tadmix+0.0002, source=3, destination=2, proportion=1.0)
         ]
-    
-
-
-class ChenTwoPopOutOfAfrica(models.Model):
-    """
-    docs
-    
-    """
-    def __init__(self):
-        super().__init__()
-        generation_time = 25
-
-        # 220kya:
-        # African population constant with Ne~7300
-        N_A = 7310
-        
-        # 148kya:
-        # instantaneous growth to Ne~14000
-        T_AF = 148e3 / generation_time
-        N_AF = 14474
-        
-        N6_EU = 13143
-        
-        # 118kya:
-        # non-AFR pops migrate OOA; bottlenecks to Ne~1800
-        # migration between AFR occurs
-        N_B = 1861
-        T5 = 118e3 / generation_time
-        T4 = T5
-        m_AF_B = 15e-5
-        N5_EU = 62
-        N4_EU = N6_EU
-        
-        # 18kya:
-        # 2nd EUR bottlenecks to Ne~1000 & starts growing with rate 0.307%
-        # migration rate slows between AFR-EUR
-        N_EU0 = 1032
-        T3 = 18e3 / generation_time
-        T2 = T3
-    #     m_AF_EU = 2.5e-5
-        r_EU0 = 0 # 0.00307
-    #     N2_EU = 15829 # N_EU0 / math.exp(-r_EU0 * T_EU_B)
-        N2_EU = 16178
-        N2_AF = 26682
-        N3_EU = 2020
-        # 5.1kya:
-        # explosive growth in both AFR & EUR
-    
-        # Chen 2015
-    #     T1_EU = 7.26e3 / generation_time 
-        T1_EU = 4.95e3 / generation_time
-        T1_AF = 10.01e3 / generation_time
-    #     r_EU = 0.0149
-        r_EU = 0.022
-        r_AF = 0.00735
-    #     N1_EU = 1.2e6 # N_EU1 / math.exp(-r_EU * T_EG)
-        N1_EU = 1.261e6
-        m_EG = 0
-        N1_AF = 5.062e5 # N_AF / math.exp(-r_AF * T_EG)
-        
-        # Population IDs correspond to their indexes in the population
-        # configuration array. Therefore, we have 0=YRI, 1=CEU initially.
-        self.population_configurations = [
-            msprime.PopulationConfiguration(
-                sample_size=n_afr, initial_size=N1_AF, growth_rate=r_AF),
-            msprime.PopulationConfiguration(
-                sample_size=n_eur, initial_size=N1_EU, growth_rate=r_EU)#,
+        # Asia and Europe split
+        eu_event = [
+            msprime.MigrationRateChange(
+                time=Teu, rate=0.0),
+            msprime.MassMigration(
+                time=Teu+0.0001, source=2, destination=1, proportion=1.0),
+            msprime.PopulationParametersChange(
+                time=Teu+0.0002, initial_size=Nb, growth_rate=0.0, population_id=1),
+            msprime.MigrationRateChange(
+                time=Teu+0.0003, rate=mafb, matrix_index=(0, 1)),
+            msprime.MigrationRateChange(
+                time=Teu+0.0003, rate=mafb, matrix_index=(1, 0))
         ]
-    
-        # up to 5.1kya, no migration
-        self.migration_matrix = [
-            [0, 0],
-            [0, 0],
+        # Out of Africa event
+        ooa_event = [
+            msprime.MigrationRateChange(
+                time=Tooa, rate=0.0),
+            msprime.MassMigration(
+                time=Tooa+0.0001, source=1, destination=0, proportion=1.0)
         ]
-        
-        self.demographic_events = [
-            # at 5.1kya, change to slow growth rate in EUR & stop growth in AFR;
-            # add migration rate
-            msprime.PopulationParametersChange(
-                time=T1_EU, growth_rate=0, initial_size=N2_EU, population_id=1),
-            msprime.PopulationParametersChange(
-                time=T1_AF, growth_rate=0, initial_size=N2_AF, population_id=0),
-            
-            # at 18kya, bottleneck + instantaneous recovery to smaller Ne
-            msprime.PopulationParametersChange(
-                time=T2, initial_size=N3_EU, population_id=1),
-            msprime.PopulationParametersChange(
-                time=T3, initial_size=N4_EU, population_id=1),
-            # at 118kya, bottleneck + instantaneous recovery to same Ne
-            msprime.PopulationParametersChange(
-                time=T4, initial_size=N5_EU, population_id=1),
-            msprime.PopulationParametersChange(
-                time=T5, initial_size=N6_EU, population_id=1),
-            # At 148kya, instantaneous growth in AFR
-            msprime.PopulationParametersChange(
-                time=T_AF, initial_size=N_A, population_id=0)
+        # initial population size
+        init_event = [
+            msprime.PopulationParametersChange(time=Thum, initial_size=N0, population_id=0)
         ]
-    
+        self.demographic_events = admixture_event + eu_event + ooa_event + init_event
