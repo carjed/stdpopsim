@@ -181,7 +181,7 @@ class TestTennessenEuropean(unittest.TestCase):
 
 class TestBrowningAmerica(unittest.TestCase):
     """
-    Basic tests for the TennessenEuropean model.
+    Basic tests for the BrowningAmerica model.
     """
 
     def test_simulation_runs(self):

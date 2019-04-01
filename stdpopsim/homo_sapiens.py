@@ -213,7 +213,16 @@ class TennessenEuropean(models.Model):
 
 class BrowningAmerica(models.Model):
     """
-    docs
+    Demographic model for American admixture, taken from 
+    `Browning et al. <http://dx.doi.org/10.1371/journal.pgen.1007385>`_.
+    
+    This model extends the Gravel et al. (2011) model to simulate an admixed 
+    population with admixture occurring 12 generations ago. The admixed population 
+    had an initial size of 30,000 and grew at a rate of 5% per generation, 
+    with 1/6 of the population of African ancestry, 1/3 European, and 1/2 Asian.
+    
+    This code was ported over from 
+    `Supplementary File 1 <https://doi.org/10.1371/journal.pgen.1007385.s005>`_
 
     """
     def __init__(self):
