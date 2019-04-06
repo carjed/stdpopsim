@@ -227,23 +227,23 @@ class BrowningAmerica(models.Model):
     """
     def __init__(self):
         super().__init__()
-        N0 = 7310 # initial population size
-        Thum = 5920 # time (gens) of advent of modern humans
-        Naf = 14474 # size of african population
-        Tooa = 2040 # number of generations back to Out of Africa
-        Nb = 1861 # size of out of Africa population
-        mafb = 1.5e-4 # migration rate Africa and Out-of-Africa
-        Teu = 920 # number generations back to Asia-Europe split
-        Neu = 1032 # bottleneck population sizes
+        N0 = 7310  # initial population size
+        Thum = 5920  # time (gens) of advent of modern humans
+        Naf = 14474  # size of african population
+        Tooa = 2040  # number of generations back to Out of Africa
+        Nb = 1861  # size of out of Africa population
+        mafb = 1.5e-4  # migration rate Africa and Out-of-Africa
+        Teu = 920  # number generations back to Asia-Europe split
+        Neu = 1032  # bottleneck population sizes
         Nas = 554
-        mafeu = 2.5e-5 # mig. rates
+        mafeu = 2.5e-5  # mig. rates
         mafas = 7.8e-6
         meuas = 3.11e-5
-        reu = 0.0038 # growth rate per generation in Europe
-        ras = 0.0048 # growth rate per generation in Asia
-        Tadmix = 12 # time of admixture
-        Nadmix = 30000 # initial size of admixed population
-        radmix = .05 # growth rate of admixed population
+        reu = 0.0038  # growth rate per generation in Europe
+        ras = 0.0048  # growth rate per generation in Asia
+        Tadmix = 12  # time of admixture
+        Nadmix = 30000  # initial size of admixed population
+        radmix = .05  # growth rate of admixed population
         # pop0 is Africa, pop1 is Europe, pop2 is Asia,  pop3 is admixed
         self.population_configurations = [
             msprime.PopulationConfiguration(
@@ -293,6 +293,9 @@ class BrowningAmerica(models.Model):
         ]
         # initial population size
         init_event = [
-            msprime.PopulationParametersChange(time=Thum, initial_size=N0, population_id=0)
+            msprime.PopulationParametersChange(
+                time=Thum,
+                initial_size=N0,
+                population_id=0)
         ]
         self.demographic_events = admixture_event + eu_event + ooa_event + init_event
