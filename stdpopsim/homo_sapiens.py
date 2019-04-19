@@ -332,3 +332,156 @@ class BrowningAmerica(models.Model):
                 population_id=0)
         ]
         self.demographic_events = admixture_event + eu_event + ooa_event + init_event
+
+
+class RagsdaleArchaic(models.Model):
+    """
+    `Ragsdale & Gravel's <https://doi.org/10.1101/489401>`_ extension of
+    the GutenkunstThreePopOutOfAfrica model, with three extant populations
+    (YRI, CEU, and CHB) and two archaic branches: a ghost archaic population
+    (which admixes with YRI) and Neanderthals (which admix with CEU & CHB).
+
+    Population indices are in the following order:
+    0: YRI
+    1: CEU
+    2: CHB
+    3: Ghost arhcaic
+    4: Neanderthal
+    """
+
+    def __init__(self):
+        super().__init__()
+        generation_time = 29
+        N_0 = 3600
+        N_YRI = 13900
+        N_B = 880
+        N_CEU0 = 2300
+        r_CEU = 0.125/100
+        N_CHB0 = 650
+        r_CHB = 0.372/100
+        m_AF_B = 52.2e-5
+        m_YRI_CEU = 2.48e-5
+        m_YRI_CHB = 0
+        m_CEU_CHB = 11.3e-5
+        T_AF = 300000 / generation_time
+        T_B = 60700 / generation_time
+        T_CEU_CHB = 36000 / generation_time
+        N_CEU = N_CEU0 / math.exp(-r_CEU * T_CEU_CHB)
+        N_CHB = N_CHB0 / math.exp(-r_CHB * T_CEU_CHB)
+        T_ARCH_SPLIT = 499000 / generation_time
+        T_ARCH_MIG = 125000 / generation_time
+        m_AF_ARCH = 1.98e-5
+        T_NEAN_SPLIT = 559000 / generation_time
+        m_OOA_NEAN = 0.825e-5
+        T_ARCH_END = 18700 / generation_time
+
+        self.population_configurations = [
+            msprime.PopulationConfiguration(initial_size=N_YRI),
+            msprime.PopulationConfiguration(initial_size=N_CEU, growth_rate=r_CEU),
+            msprime.PopulationConfiguration(initial_size=N_CHB, growth_rate=r_CHB),
+            msprime.PopulationConfiguration(initial_size=N_0),  # ghost archaic
+            msprime.PopulationConfiguration(initial_size=N_0),  # Neanderthal
+        ]
+        self.migration_matrix = [
+            [      0, m_YRI_CEU, m_YRI_CHB, 0, 0],  # noqa
+            [m_YRI_CEU,       0, m_CEU_CHB, 0, 0],  # noqa
+            [m_YRI_CHB, m_CEU_CHB,       0, 0, 0],  # noqa
+            [        0,         0,       0, 0, 0],  # noqa
+            [        0,         0,       0, 0, 0],  # noqa
+        ]
+        self.demographic_events = [
+            # at T_ARCH_END, migration between archaic/modern branches
+            # GHOST <-> AFR
+            msprime.MigrationRateChange(
+                time=T_ARCH_END,
+                rate=m_AF_ARCH,
+                matrix_index=(0, 3)),
+            msprime.MigrationRateChange(
+                time=T_ARCH_END,
+                rate=m_AF_ARCH,
+                matrix_index=(3, 0)),
+            # NEAN <-> CEU
+            msprime.MigrationRateChange(
+                time=T_ARCH_END,
+                rate=m_OOA_NEAN,
+                matrix_index=(1, 4)),
+            msprime.MigrationRateChange(
+                time=T_ARCH_END,
+                rate=m_OOA_NEAN,
+                matrix_index=(4, 1)),
+            # NEAN <-> CHB
+            msprime.MigrationRateChange(
+                time=T_ARCH_END,
+                rate=m_OOA_NEAN,
+                matrix_index=(2, 4)),
+            msprime.MigrationRateChange(
+                time=T_ARCH_END,
+                rate=m_OOA_NEAN,
+                matrix_index=(4, 2)),
+            # at T_CEU_CHB, CEU merges with CHB
+            msprime.MassMigration(
+                time=T_CEU_CHB, source=2, destination=1, proportion=1.0),
+            msprime.MigrationRateChange(time=T_CEU_CHB, rate=0),
+            # B <-> AFR
+            msprime.MigrationRateChange(
+                time=T_CEU_CHB,
+                rate=m_AF_B,
+                matrix_index=(0, 1)),
+            msprime.MigrationRateChange(
+                time=T_CEU_CHB,
+                rate=m_AF_B,
+                matrix_index=(1, 0)),
+            # GHOST <-> AFR
+            msprime.MigrationRateChange(
+                time=T_CEU_CHB,
+                rate=m_AF_ARCH,
+                matrix_index=(0, 3)),
+            msprime.MigrationRateChange(
+                time=T_CEU_CHB,
+                rate=m_AF_ARCH,
+                matrix_index=(3, 0)),
+            # NEAN <-> B
+            msprime.MigrationRateChange(
+                time=T_CEU_CHB,
+                rate=m_OOA_NEAN,
+                matrix_index=(1, 4)),
+            msprime.MigrationRateChange(
+                time=T_CEU_CHB,
+                rate=m_OOA_NEAN,
+                matrix_index=(4, 1)),
+            msprime.PopulationParametersChange(
+                time=T_CEU_CHB,
+                initial_size=N_B,
+                growth_rate=0, population_id=1),
+            # Population B merges into YRI at T_B
+            msprime.MassMigration(
+                time=T_B, source=1, destination=0, proportion=1.0),
+            msprime.MigrationRateChange(time=T_B, rate=0),
+            # GHOST <-> AFR
+            msprime.MigrationRateChange(
+                time=T_B,
+                rate=m_AF_ARCH,
+                matrix_index=(0, 3)),
+            msprime.MigrationRateChange(
+                time=T_B,
+                rate=m_AF_ARCH,
+                matrix_index=(3, 0)),
+            # GHOST <-> AFR migration stops at T_ARCH_MIG
+            msprime.MigrationRateChange(
+                time=T_ARCH_MIG,
+                rate=0,
+                matrix_index=(0, 3)),
+            msprime.MigrationRateChange(
+                time=T_ARCH_MIG,
+                rate=0,
+                matrix_index=(3, 0)),
+            # Size changes to N_A at T_AF
+            msprime.PopulationParametersChange(
+                time=T_AF, initial_size=N_0, population_id=0),
+            # Ghost archaic merges into YRI
+            msprime.MassMigration(
+                time=T_ARCH_SPLIT, source=3, destination=0, proportion=1.0),
+            # Neanderthal mergest into YRI
+            msprime.MassMigration(
+                time=T_NEAN_SPLIT, source=4, destination=0, proportion=1.0),
+        ]

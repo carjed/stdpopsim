@@ -203,3 +203,23 @@ class TestBrowningAmerica(unittest.TestCase):
         model.debug(output)
         s = output.getvalue()
         self.assertGreater(len(s), 0)
+
+
+class TestRagsdaleArchaic(unittest.TestCase):
+    """
+    Basic tests for the RagsdaleArchaic model.
+    """
+
+    def test_simulation_runs(self):
+        model = homo_sapiens.RagsdaleArchaic()
+        ts = msprime.simulate(
+            samples=[msprime.Sample(pop, 0) for pop in range(4)],
+            **model.asdict())
+        self.assertEqual(ts.num_populations, 4)
+
+    def test_debug_runs(self):
+        model = homo_sapiens.RagsdaleArchaic()
+        output = io.StringIO()
+        model.debug(output)
+        s = output.getvalue()
+        self.assertGreater(len(s), 0)
